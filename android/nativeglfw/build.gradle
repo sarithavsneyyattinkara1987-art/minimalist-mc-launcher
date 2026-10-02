@@ -1,0 +1,56 @@
+// DroidBridge Launcher - native GLFW compatibility module
+//
+// Provides ca.dnamobile.nativeglfw.* (a native-GLFW-backed SurfaceView and
+// GLFW compat shims) plus the droidbridge_native_glfw_v82 shared library.
+// Referenced from the app module via SDLControllerManager and the game
+// activity lifecycle.
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'ca.dnamobile.nativeglfw'
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 26
+
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_STL=c++_shared'
+                abiFilters 'arm64-v8a'
+            }
+        }
+    }
+
+    buildFeatures {
+        prefabPublishing true
+    }
+
+    prefab {
+        droidbridge_native_glfw_v82 {
+            headers "src/main/cpp/include"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    externalNativeBuild {
+        cmake {
+            path 'src/main/cpp/CMakeLists.txt'
+            version '3.22.1'
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.annotation:androidx.annotation:1.8.2'
+}

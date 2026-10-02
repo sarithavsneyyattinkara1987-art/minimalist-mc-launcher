@@ -1,0 +1,112 @@
+// DroidBridge Launcher - app module
+//
+// Authored from the imports actually present in app/src/main/java because the
+// public source drop does not include app/build.gradle.
+//
+// NOTE: v0.2.15 "OFFLINE" likely ships prebuilt native .so files. The public
+// source drop does not include them, so this project builds the JNI from
+// source. To use the prebuilt libs from an APK you own instead: extract
+// lib/<abi>/*.so into app/src/main/jniLibs/<abi>/ and COMMENT OUT the
+// externalNativeBuild block below (both outputs cannot be packaged together;
+// see app/src/main/jniLibs/README.md).
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ca.dnamobile.droidbridgelauncher'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'ca.dnamobile.droidbridgelauncher'
+        minSdk 26
+        targetSdk 35
+
+        versionCode 1
+        versionName "0.2.15-offline"
+
+        ndk {
+            // Keep CI/first builds fast; widen as needed (e.g. add armeabi-v7a).
+            abiFilters 'arm64-v8a'
+        }
+
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        prefab true
+        buildConfig true
+    }
+
+    // ndkBuild (Android.mk / Application.mk as shipped in app/src/main/jni)
+    externalNativeBuild {
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
+        }
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+            // The Java agent sources are packaged for the runtime image, not
+            // compiled as part of the Android app module.
+            java.srcDirs = ['src/main/java']
+        }
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+        resources {
+            excludes += ['META-INF/AL2.0', 'META-INF/LGPL2.1']
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    // --- AndroidX / UI ---
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.activity:activity:1.9.3'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.documentfile:documentfile:1.0.1'
+    implementation 'com.google.android.material:material:1.12.0'
+
+    // --- Auth / device-account access (Microsoft device flow uses AppAuth) ---
+    implementation 'net.openid:appauth:0.11.1'
+
+    // --- Touch Controller mod compatibility (proxy over unix socket) ---
+    implementation 'top.fifthlight.touchcontroller:proxy-client-android:0.0.8'
+
+    // --- Native hooking (prefab import in jni/Android.mk) ---
+    implementation 'com.bytedance:bytehook:1.1.2'
+
+    // --- Prebuilt AAR (native GL driver shim) ---
+    implementation files('libs/mesa.aar')
+
+    // --- Local modules ---
+    implementation project(':nativeglfw')
+    // methods_injector_agent is a plain Java agent (java.lang.instrument); it is
+    // compiled separately for the launcher's runtime image and is not an Android
+    // library. See android/methods_injector_agent/README.md.
+}

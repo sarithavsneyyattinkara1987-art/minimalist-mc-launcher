@@ -1,0 +1,62 @@
+// DroidBridge Launcher - Java instrumentation agent
+//
+// This is a plain `java-library` module: it is compiled for the JVM (not for
+// Android) and packaged as methods_injector_agent.jar with a Premain-Class
+// manifest. The launcher copies it into app assets and attaches it to the
+// game JVM at runtime.
+//
+// Do NOT package ASM into this jar. The game JVM (Fabric/Knot) already places
+// ASM on its classpath; bundling ASM here crashes Fabric with duplicate
+// classes. Compile against it only.
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    compileOnly 'org.ow2.asm:asm:9.8'
+    compileOnly 'org.ow2.asm:asm-tree:9.8'
+    compileOnly 'org.ow2.asm:asm-commons:9.8'
+}
+
+tasks.named('jar') {
+    archiveBaseName.set('methods_injector_agent')
+
+    manifest {
+        attributes(
+                'Manifest-Version': '1.0',
+                'Premain-Class': 'ca.dnamobile.droidbridgelauncher.agent.StartInjectors',
+                'Agent-Class': 'ca.dnamobile.droidbridgelauncher.agent.StartInjectors',
+                'Can-Redefine-Classes': 'true',
+                'Can-Retransform-Classes': 'true'
+        )
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'module-info.class'
+
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+// Copy the built agent jar into the app assets dir used by the OFFLINE
+// variant layout (variants/offline/app/src/main/assets/components/...).
+// For the Play line, retarget `into(...)` to app/src/main/assets/components/.
+tasks.register('copyAgentToAssets', Copy) {
+    dependsOn tasks.named('jar')
+
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into(rootProject.file('app/src/main/assets/components/methods_injector_agent'))
+
+    rename { String ignored ->
+        'methods_injector_agent.jar'
+    }
+}

@@ -1,0 +1,90 @@
+// DroidBridge Launcher - OFFLINE variant app module (variant line)
+//
+// The OFFLINE APK (v0.2.15) is a distinct product line: package
+// ca.dnamobile.javalauncher, Pojav-derived runtime, prebuilt game engine.
+// The public OFFLINE source drop (cheesakeyk/OFFLINE-FORK) ships the Java
+// sources, res and the full JNI tree but no Gradle build files or manifest -
+// they were reverse-engineered / re-authored for this project.
+//
+// Wire this variant in from settings.gradle:
+//   include ':variants:offline:app'
+// then: ./gradlew :variants:offline:app:assembleDebug
+//
+// Build caveats (documented honestly, not hidden):
+//  - res/values has only 15 string resources but sources reference ~185
+//    R.string.* symbols. The OFFLINE source drop is a snapshot, not a
+//    self-sufficient project. The resource module in this repo is authored
+//    from the official Play-variant res tree (same UI framework), so this
+//    module overrides res/ with the full official tree.
+//  - System.loadLibrary("pojavexec") implies a native module not present in
+//    the OFFLINE drop's Android.mk headers list; see jniLibs/README.md.
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ca.dnamobile.javalauncher'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'ca.dnamobile.javalauncher'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "0.2.15-offline"
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        prefab true
+        buildConfig true
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
+        }
+    }
+
+    sourceSets {
+        main {
+            // Overlay the complete Play-variant res tree (styles, layouts,
+            // drawables) on top of the OFFLINE snapshot's own res/.
+            res.srcDirs = ['src/main/res', '../../../app/src/main/res']
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'com.google.android.material:material:1.12.0'
+
+    // Pojav-lineage runtime pieces referenced by the OFFLINE sources
+    implementation 'net.openid:appauth:0.11.1'
+    implementation 'top.fifthlight.touchcontroller:proxy-client-android:0.0.8'
+    implementation 'com.bytedance:bytehook:1.1.2'
+    implementation files('../../../app/libs/mesa.aar')
+    implementation project(':nativeglfw')
+}

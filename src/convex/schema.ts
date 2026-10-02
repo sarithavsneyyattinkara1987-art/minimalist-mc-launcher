@@ -32,12 +32,45 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // A launcher instance: one Minecraft Java Edition install managed by
+    // DroidBridge on an Android device.
+    instances: defineTable({
+      userId: v.id("users"),
+      name: v.string(),
+      mcVersion: v.string(),
+      loader: v.union(
+        v.literal("vanilla"),
+        v.literal("fabric"),
+        v.literal("quilt"),
+        v.literal("neoforge"),
+        v.literal("forge"),
+      ),
+      renderer: v.union(
+        v.literal("ltw"),
+        v.literal("mobile_glues"),
+        v.literal("zink"),
+        v.literal("virgl"),
+      ),
+      javaRuntime: v.union(v.literal("jre8"), v.literal("jre17"), v.literal("jre21")),
+      controlLayout: v.string(),
+      ramMb: v.number(),
+      status: v.union(
+        v.literal("ready"),
+        v.literal("installing"),
+        v.literal("broken"),
+      ),
+      lastPlayedAt: v.optional(v.number()),
+    })
+      .index("by_user", ["userId"])
+      .index("by_user_and_status", ["userId", "status"]),
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // Release notes for the launcher itself (seeded from the public repos).
+    changelog: defineTable({
+      version: v.string(),
+      channel: v.union(v.literal("stable"), v.literal("beta"), v.literal("offline")),
+      releasedAt: v.number(),
+      highlights: v.array(v.string()),
+    }).index("by_version", ["version"]),
   },
   {
     schemaValidation: false,

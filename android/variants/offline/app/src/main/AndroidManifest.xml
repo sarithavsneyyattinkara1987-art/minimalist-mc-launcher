@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Network + downloads (Microsoft login, version manifests, game downloads) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Foreground service during game runtime / component unpack -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Android 13+ notification permission -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:label="DroidBridge"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.DroidBridge"
+        android:allowBackup="false"
+        android:extractNativeLibs="true"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="false">
+
+        <!-- Launcher entry: unpacks runtime components, then hands off to MainActivity -->
+        <activity
+            android:name="ca.dnamobile.javalauncher.SplashActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- The game activity (Pojav-derived, package net.kdt.pojavlaunch) -->
+        <activity
+            android:name="net.kdt.pojavlaunch.MainActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|screenSize|density"
+            android:launchMode="singleTask"
+            android:process=":game"
+            android:supportsRtl="true" />
+
+        <!-- In-launcher settings -->
+        <activity
+            android:name="ca.dnamobile.javalauncher.LauncherSettingsActivity"
+            android:exported="false"
+            android:label="Settings" />
+
+        <!-- Full-screen crash report screen -->
+        <activity
+            android:name="ca.dnamobile.javalauncher.ErrorActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:process=":error" />
+
+        <!-- Touch control layout editor -->
+        <activity
+            android:name="ca.dnamobile.javalauncher.controls.ControlsActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode" />
+
+        <!-- Standalone controls editor entry point -->
+        <activity
+            android:name="ca.dnamobile.javalauncher.controls.ControlsEditorActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode" />
+
+        <!-- Voice chat permission bridge (Minecraft Simple Voice Chat mod) -->
+        <activity
+            android:name="ca.dnamobile.javalauncher.settings.SimpleVoiceChatPermissionActivity"
+            android:exported="false"
+            android:excludeFromRecents="true" />
+
+    </application>
+</manifest>
+
